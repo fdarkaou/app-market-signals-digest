@@ -1,0 +1,14 @@
+{
+  "name": "app-market-signals-digest",
+  "version": "1.0.0",
+  "description": "A weekly digest of App Store market signals for your list of iOS apps: best chart rank and daily move, new paid ads, organic post views and top-10 searches, from the PeekPanda market signals API. Markdown/CSV/JSON, optional Slack or Discord post.",
+  "type": "module",
+  "bin": { "app-market-signals-digest": "cli.js" },
+  "scripts": { "test": "node --test test/" },
+  "engines": { "node": ">=18" },
+  "license": "MIT",
+  "author": "Fekri Darkaoui",
+  "repository": { "type": "git", "url": "https://github.com/fdarkaou/app-market-signals-digest.git" },
+  "homepage": "https://fdarkaou.github.io/app-market-signals-digest/",
+  "keywords": ["app-store", "ios", "market-intelligence", "competitor-analysis", "paid-ads", "aso", "peekpanda"]
+}

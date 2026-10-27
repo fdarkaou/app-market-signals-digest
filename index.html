@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>App market signals digest: chart moves, new paid ads, organic views and top searches for your iOS apps</title>
+<meta name="description" content="Paste a PeekPanda market signals response and see, for each iOS app, its best App Store chart rank and daily move, live and new paid ads, weekly ad starts, organic post views and top-10 searches. Runs in your browser.">
+<style>
+  body { font: 15px/1.5 system-ui, sans-serif; max-width: 1180px; margin: 2rem auto; padding: 0 1rem; color: #1b1b1f; }
+  textarea { width: 100%; min-height: 160px; font: 13px ui-monospace, monospace; }
+  button, select { padding: .45rem .9rem; margin: .5rem .5rem .5rem 0; cursor: pointer; }
+  table { border-collapse: collapse; width: 100%; margin-top: 1rem; font-size: 14px; }
+  th, td { border-bottom: 1px solid #ddd; padding: .4rem .5rem; text-align: left; vertical-align: top; }
+  td.n { text-align: right; }
+  .up { color: #1a7f37; } .down { color: #cf222e; }
+  .muted { color: #777; } .err { color: #cf222e; white-space: pre-wrap; }
+  ul.hl { background: #f6f8fa; padding: .75rem 1rem .75rem 2rem; border-radius: 6px; }
+  pre { background: #f6f8fa; padding: .75rem; overflow-x: auto; font-size: 13px; }
+  footer { margin-top: 2.5rem; font-size: 13px; color: #555; }
+</style>
+</head>
+<body>
+<h1>App market signals digest</h1>
+<p>For each iOS app in a list: its best App Store chart rank and the move since yesterday, live and newly launched paid ads with 8 weeks of ad starts, organic post views, and how many searches it ranks top 10 for. Paste one market signals response below. Nothing leaves your browser.</p>
+<textarea id="in" spellcheck="false" placeholder='{"country":"us","weeks":[...],"apps":[{"storeId":"...","placement":{...},"paid":{...},"organic":{...},"keywords":{...}}]}'></textarea>
+<div>
+  <button id="go">Build digest</button>
+  <button id="ex">Load example data</button>
+  <label>Sort by <select id="by">
+    <option value="rank">best chart rank</option><option value="rankChange">chart move</option>
+    <option value="startedLast7Days">new ads, last 7 days</option><option value="liveAds">live ads</option>
+    <option value="bestPostViews">best organic post</option><option value="keywordsTop10">top-10 searches</option>
+  </select></label>
+  <button id="csv" disabled>Download CSV</button>
+</div>
+<div id="err" class="err"></div>
+<div id="out"></div>
+
+<h2>Where to get the JSON</h2>
+<p>The input is the market signals response from <a href="https://peekpanda.com">PeekPanda</a>, an iOS competitor catalogue that keeps dated chart, paid-ad, organic and keyword evidence for each app. Send up to 600 numeric App Store ids per request:</p>
+<pre>curl --get https://api.peekpanda.com/v1/market/signals \
+  -H "Authorization: Bearer $PEEKPANDA_TOKEN" \
+  -H 'x-genviral-tenancy: personal' \
+  --data-urlencode 'country=us' \
+  --data-urlencode 'storeIds=1000000001,1000000002'</pre>
+<p>Over MCP this is the <code>get_market</code> tool with action <code>signals</code>. You need a PeekPanda account and an API key; the <a href="https://peekpanda.com/docs/market-signals">market signals reference</a> lists the fields, limits and errors. You can also paste a JSON array of several responses (one per batch).</p>
+
+<h2>How to read it</h2>
+<ul>
+  <li>Best chart rank is the best rank across every stored App Store chart of the storefront on the latest chart day. ▲/▼ is the move since the day before.</li>
+  <li>"no ads found" means a recent collection found none. "not collected" means no collection has finished, so it says nothing about the app's ads.</li>
+  <li>The bars show paid-ad starts for 8 Monday-start weeks, oldest first. The last week is still running.</li>
+  <li>Organic posts are matched by product name, not account ownership. Search positions are observed results, not search volume.</li>
+  <li>"unknown" means that stream was never collected for the app. It is unknown, not zero.</li>
+</ul>
+
+<footer>Open source: <a href="https://github.com/fdarkaou/app-market-signals-digest">github.com/fdarkaou/app-market-signals-digest</a> (Node CLI, batches of 600, Slack or Discord post, weekly GitHub Actions example). Example data is made up.</footer>
+
+<script type="module">
+import { merge, toRows, highlightLines, compact, toCsv } from './signals.js';
+const $ = (id) => document.getElementById(id);
+let last = null;
+const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const move = (x) => x == null ? '' : x > 0 ? `<span class="up">▲${x}</span>` : x < 0 ? `<span class="down">▼${-x}</span>` : '<span class="muted">=</span>';
+const unk = '<span class="muted">unknown</span>';
+
+function bars(series, weeks) {
+  if (!Array.isArray(series)) return '';
+  const max = Math.max(1, ...series), W = 8, H = 26;
+  return `<svg width="${series.length * (W + 2)}" height="${H}" role="img" aria-label="Paid-ad starts per week">${series.map((v, i) =>
+    `<rect x="${i * (W + 2)}" y="${H - Math.max(1, (v / max) * H)}" width="${W}" height="${Math.max(1, (v / max) * H)}" fill="${i === series.length - 1 ? '#5b8def88' : '#5b8def'}"><title>${esc(weeks?.[i] ?? '')}: ${v}</title></rect>`).join('')}</svg>`;
+}
+
+function render() {
+  $('err').textContent = ''; $('out').innerHTML = ''; $('csv').disabled = true;
+  let raw;
+  try { raw = JSON.parse($('in').value); } catch (e) { $('err').textContent = 'That is not valid JSON: ' + e.message; return; }
+  const list = Array.isArray(raw) ? raw : [raw];
+  if (!list.every((r) => Array.isArray(r?.apps))) { $('err').textContent = 'Expected an object with an "apps" array (the GET /v1/market/signals response), or an array of them.'; return; }
+  last = merge(list);
+  const key = $('by').value;
+  const rows = toRows(last).sort((a, b) => key === 'rank' ? (a.rank ?? 1e9) - (b.rank ?? 1e9) : (b[key] ?? -1e9) - (a[key] ?? -1e9));
+  const dates = [rows.find((r) => r.chartDay)?.chartDay && 'chart day ' + rows.find((r) => r.chartDay).chartDay,
+    last.keywordsObservedAt && 'keywords observed ' + last.keywordsObservedAt.slice(0, 10),
+    last.organicViewsCountedAt && 'organic views counted ' + last.organicViewsCountedAt.slice(0, 10)].filter(Boolean).join(' · ');
+  const hl = highlightLines(last);
+  const body = rows.map((r) => `<tr><td>${esc(r.name ?? 'Unnamed app')}<div class="muted">id ${esc(r.storeId)}</div></td>
+    <td class="n">${r.rank == null ? '<span class="muted">none</span>' : '#' + r.rank} ${move(r.rankChange)}</td><td>${esc(r.chart ?? '')}</td>
+    <td>${r.liveAds != null ? `${r.liveAds} live / ${r.totalAds}` : `<span class="muted">${esc(r.paidStatus)}</span>`}</td>
+    <td class="n">${r.startedLast7Days ?? ''}</td><td>${bars(r.weeklyStarts, last.weeks)}</td>
+    <td class="n">${r.organicPosts ?? unk}</td><td class="n">${compact(r.bestPostViews)}</td>
+    <td class="n">${r.keywordsTop10 ?? unk}</td><td>${esc(r.bestKeyword ?? '')}</td></tr>`).join('');
+  $('out').innerHTML = `<h2>${rows.length} apps · storefront ${esc(String(last.country ?? 'us').toUpperCase())}</h2><p class="muted">${esc(dates)}</p>` +
+    (hl.length ? `<ul class="hl">${hl.map((l) => `<li>${esc(l)}</li>`).join('')}</ul>` : '') +
+    `<table><thead><tr><th>App</th><th>Best chart rank</th><th>Chart</th><th>Paid ads</th><th>New ads 7d</th><th>Ad starts / week</th><th>Organic posts</th><th>Best post views</th><th>Top-10 searches</th><th>Best search</th></tr></thead><tbody>${body}</tbody></table>`;
+  $('csv').disabled = false;
+}
+
+$('go').onclick = render;
+$('by').onchange = () => last && render();
+$('ex').onclick = async () => { $('in').value = await (await fetch('examples/signals.json')).text(); render(); };
+$('csv').onclick = () => {
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([toCsv(last)], { type: 'text/csv' }));
+  a.download = `market-signals-${last.country ?? 'us'}.csv`; a.click();
+};
+</script>
+</body>
+</html>

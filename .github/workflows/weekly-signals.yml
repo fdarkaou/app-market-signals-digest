@@ -1,0 +1,28 @@
+# Example: post a market signals digest every Monday. Disabled until you set ENABLE_SIGNALS=true.
+# Secrets: PEEKPANDA_TOKEN (PeekPanda API key), SIGNALS_WEBHOOK_URL (Slack or Discord incoming webhook).
+name: weekly-signals
+on:
+  schedule:
+    - cron: '0 7 * * 1'
+  workflow_dispatch:
+jobs:
+  signals:
+    if: vars.ENABLE_SIGNALS == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Signals digest
+        env:
+          PEEKPANDA_TOKEN: ${{ secrets.PEEKPANDA_TOKEN }}
+          SIGNALS_WEBHOOK_URL: ${{ secrets.SIGNALS_WEBHOOK_URL }}
+        run: |
+          # One API call per 600 apps. Put your own ids in examples/apps.txt (or point --list at another file).
+          node cli.js --list examples/apps.txt --country us --webhook "$SIGNALS_WEBHOOK_URL" >> "$GITHUB_STEP_SUMMARY"
+          node cli.js --list examples/apps.txt --country us --format csv > signals.csv
+      - uses: actions/upload-artifact@v4
+        with:
+          name: market-signals
+          path: signals.csv

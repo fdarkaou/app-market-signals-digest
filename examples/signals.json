@@ -1,0 +1,38 @@
+{
+  "country": "us",
+  "weeks": ["2026-08-31","2026-09-07","2026-09-14","2026-09-21","2026-09-28","2026-10-05","2026-10-12","2026-10-19"],
+  "keywordsObservedAt": "2026-10-21T08:40:00.000Z",
+  "organicViewsCountedAt": "2026-10-18T00:00:00.000Z",
+  "apps": [
+    {
+      "storeId": "1000000001",
+      "placement": { "rank": 8, "previousRank": 19, "chartType": "free", "categoryId": "6013", "categoryName": "Health & Fitness", "day": "2026-10-21" },
+      "paid": { "totalAds": 42, "liveAds": 27, "startedLast7Days": 6, "medianDaysLive": 21, "longestDaysLive": 64, "formats": { "video": 35, "dynamic": 2, "image": 5 }, "topCallToAction": "Install now", "destinations": { "appStore": 38, "playStore": 0, "web": 4 }, "weeklyStarts": [1, 0, 3, 2, 4, 1, 5, 2] },
+      "organic": { "matchedPosts": 14, "views": 8420000, "medianViews": 310000, "bestPostViews": 2900000, "postsOverMillion": 3, "newestPublishedAt": "2026-10-16T00:00:00.000Z", "platforms": { "TikTok": 11, "Instagram": 3 }, "matchedBy": "product_name" },
+      "keywords": { "ranked": 34, "top1": 2, "top3": 5, "top10": 11, "top50": 22, "best": { "query": "calorie counter", "position": 1, "popularity": 71, "popularityEstimate": null }, "top": [ { "query": "calorie counter", "position": 1, "popularity": 71, "popularityEstimate": null } ] },
+      "name": "Example Calorie Tracker",
+      "iconUrl": null,
+      "paidCollection": { "freshness": "fresh", "lastCollectedAt": "2026-10-21T06:15:00.000Z" }
+    },
+    {
+      "storeId": "1000000002",
+      "placement": { "rank": 31, "previousRank": 24, "chartType": "grossing", "categoryId": "6013", "categoryName": "Health & Fitness", "day": "2026-10-21" },
+      "paid": null,
+      "organic": { "matchedPosts": 3, "views": 95000, "medianViews": 21000, "bestPostViews": 61000, "postsOverMillion": 0, "newestPublishedAt": "2026-09-30T00:00:00.000Z", "platforms": { "TikTok": 3 }, "matchedBy": "product_name" },
+      "keywords": { "ranked": 12, "top1": 0, "top3": 1, "top10": 3, "top50": 8, "best": { "query": "meal planner", "position": 3, "popularity": 58, "popularityEstimate": null }, "top": [] },
+      "name": "Example Meal Prep",
+      "iconUrl": null,
+      "paidCollection": { "freshness": "fresh", "lastCollectedAt": "2026-10-20T22:05:00.000Z" }
+    },
+    {
+      "storeId": "1000000003",
+      "placement": null,
+      "paid": null,
+      "organic": null,
+      "keywords": null,
+      "name": "Example Water Reminder",
+      "iconUrl": null,
+      "paidCollection": { "freshness": "never", "lastCollectedAt": null }
+    }
+  ]
+}

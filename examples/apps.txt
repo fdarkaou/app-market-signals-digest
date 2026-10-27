@@ -1,0 +1,4 @@
+# One App Store id or app link per line. Example ids, replace with the apps you watch.
+1000000001   # my app
+https://apps.apple.com/us/app/example-meal-prep/id1000000002
+1000000003
